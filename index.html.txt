@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="pl" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator Kalorii i BMI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    * {
+      font-family: 'Outfit', sans-serif;
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    }
+    .card-glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .input-field {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+    }
+    .input-field:focus {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #22d3ee;
+      box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
+    }
+    .result-card {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+    .bmi-scale {
+      background: linear-gradient(90deg, #22d3ee 0%, #10b981 25%, #f59e0b 50%, #ef4444 75%, #dc2626 100%);
+    }
+    .tab-active {
+      background: rgba(34, 211, 238, 0.2);
+      border-bottom: 2px solid #22d3ee;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade {
+      animation: fadeIn 0.4s ease-out;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(34, 211, 238, 0.5); }
+    }
+    .pulse-glow {
+      animation: pulse-glow 2s ease-in-out infinite;
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full gradient-bg text-white">
+  <div class="h-full overflow-auto">
+   <div class="min-h-full p-4 md:p-8">
+    <div class="max-w-2xl mx-auto"><!-- Header -->
+     <div class="text-center mb-8 animate-fade">
+      <div class="inline-flex items-center gap-3 mb-4">
+       <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+       </svg>
+       <h1 id="main-title" class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent">Kalkulator Zdrowia</h1>
+      </div>
+      <p class="text-slate-400 text-sm md:text-base">Oblicz swoje BMI i dzienne zapotrzebowanie kaloryczne</p>
+     </div><!-- Tabs -->
+     <div class="flex mb-6 card-glass rounded-xl p-1"><button id="tab-bmi" onclick="switchTab('bmi')" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all tab-active flex items-center justify-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+       </svg><span id="bmi-tab-text">BMI</span> </button> <button id="tab-calories" onclick="switchTab('calories')" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center justify-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+       </svg><span id="calories-tab-text">Kalorie</span> </button> <button id="tab-pyramid" onclick="switchTab('pyramid')" class="flex-1 py-3 px-4 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center justify-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+       </svg><span id="pyramid-tab-text">Piramida</span> </button>
+     </div><!-- BMI Calculator -->
+     <div id="bmi-section" class="card-glass rounded-2xl p-6 md:p-8 animate-fade">
+      <h2 id="bmi-section-title" class="text-xl font-semibold mb-6 flex items-center gap-2"><span class="w-2 h-2 bg-cyan-400 rounded-full"></span> Kalkulator BMI</h2>
+      <div class="space-y-5">
+       <div><label for="bmi-weight" class="block text-sm font-medium text-slate-300 mb-2">Waga (kg)</label> <input type="number" id="bmi-weight" placeholder="np. 70" min="20" max="300" step="0.1" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+       </div>
+       <div><label for="bmi-height" class="block text-sm font-medium text-slate-300 mb-2">Wzrost (cm)</label> <input type="number" id="bmi-height" placeholder="np. 175" min="100" max="250" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+       </div>
+       <div><label class="block text-sm font-medium text-slate-300 mb-2">Płeć</label>
+        <div class="flex gap-2"><button type="button" id="bmi-gender-male" onclick="selectBMIGender('male')" class="flex-1 input-field rounded-xl py-3 text-center transition-all hover:border-cyan-400"> 👨 Mężczyzna </button> <button type="button" id="bmi-gender-female" onclick="selectBMIGender('female')" class="flex-1 input-field rounded-xl py-3 text-center transition-all hover:border-cyan-400"> 👩 Kobieta </button>
+        </div>
+       </div><button onclick="calculateBMI()" class="w-full btn-primary text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg> Oblicz BMI </button>
+      </div>
+      <div id="bmi-result" class="hidden mt-6 result-card rounded-xl p-6 animate-fade">
+       <div class="text-center mb-4">
+        <div class="text-5xl font-bold text-cyan-400 mb-2 pulse-glow inline-block px-6 py-2 rounded-xl" id="bmi-value">
+         0
+        </div>
+        <div class="text-lg font-medium" id="bmi-category">
+         -
+        </div>
+       </div>
+       <div class="mt-6">
+        <div class="flex justify-between text-xs text-slate-400 mb-2"><span>Niedowaga</span> <span>Norma</span> <span>Nadwaga</span> <span>Otyłość</span>
+        </div>
+        <div class="h-3 rounded-full bmi-scale relative">
+         <div id="bmi-indicator" class="absolute w-4 h-4 bg-white rounded-full -top-0.5 shadow-lg transform -translate-x-1/2 transition-all duration-500" style="left: 0%"></div>
+        </div>
+        <div class="flex justify-between text-xs text-slate-500 mt-1"><span>16</span> <span>18.5</span> <span>25</span> <span>30</span> <span>40</span>
+        </div>
+       </div>
+       <div id="bmi-description" class="mt-4 text-sm text-slate-300 text-center"></div>
+      </div>
+     </div><!-- Calorie Calculator -->
+     <div id="calories-section" class="hidden card-glass rounded-2xl p-6 md:p-8 animate-fade">
+      <h2 id="calorie-section-title" class="text-xl font-semibold mb-6 flex items-center gap-2"><span class="w-2 h-2 bg-orange-400 rounded-full"></span> Zapotrzebowanie kaloryczne</h2>
+      <div class="space-y-5">
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="cal-weight" class="block text-sm font-medium text-slate-300 mb-2">Waga (kg)</label> <input type="number" id="cal-weight" placeholder="70" min="20" max="300" step="0.1" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+        </div>
+        <div><label for="cal-height" class="block text-sm font-medium text-slate-300 mb-2">Wzrost (cm)</label> <input type="number" id="cal-height" placeholder="175" min="100" max="250" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+        </div>
+       </div>
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="cal-age" class="block text-sm font-medium text-slate-300 mb-2">Wiek (lata)</label> <input type="number" id="cal-age" placeholder="30" min="10" max="120" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+        </div>
+        <div><label class="block text-sm font-medium text-slate-300 mb-2">Płeć</label>
+         <div class="flex gap-2"><button type="button" id="gender-male" onclick="selectGender('male')" class="flex-1 input-field rounded-xl py-3 text-center transition-all hover:border-cyan-400"> 👨 Mężczyzna </button> <button type="button" id="gender-female" onclick="selectGender('female')" class="flex-1 input-field rounded-xl py-3 text-center transition-all hover:border-cyan-400"> 👩 Kobieta </button>
+         </div>
+        </div>
+       </div>
+       <div><label class="block text-sm font-medium text-slate-300 mb-2">Poziom aktywności</label> <select id="cal-activity" class="w-full input-field rounded-xl px-4 py-3 text-white outline-none cursor-pointer"> <option value="1.2">Siedzący tryb życia (brak ćwiczeń)</option> <option value="1.375">Lekka aktywność (1-3 dni/tydz.)</option> <option value="1.55" selected>Umiarkowana aktywność (3-5 dni/tydz.)</option> <option value="1.725">Wysoka aktywność (6-7 dni/tydz.)</option> <option value="1.9">Bardzo wysoka aktywność (2x dziennie)</option> </select>
+       </div><button onclick="calculateCalories()" class="w-full btn-primary text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+        </svg> Oblicz kalorie </button>
+      </div>
+      <div id="calories-result" class="hidden mt-6 animate-fade">
+       <div class="result-card rounded-xl p-6 text-center mb-4">
+        <div class="text-sm text-slate-400 mb-1">
+         Twoje dzienne zapotrzebowanie
+        </div>
+        <div class="text-5xl font-bold text-cyan-400 pulse-glow inline-block px-6 py-2 rounded-xl" id="tdee-value">
+         0
+        </div>
+        <div class="text-lg text-slate-300">
+         kcal / dzień
+        </div>
+       </div>
+       <div class="grid grid-cols-3 gap-3">
+        <div class="card-glass rounded-xl p-4 text-center">
+         <div class="text-xs text-slate-400 mb-1">
+          🔻 Redukcja
+         </div>
+         <div class="text-xl font-bold text-red-400" id="cal-deficit">
+          0
+         </div>
+         <div class="text-xs text-slate-500">
+          kcal
+         </div>
+        </div>
+        <div class="card-glass rounded-xl p-4 text-center border-cyan-400/30 border">
+         <div class="text-xs text-slate-400 mb-1">
+            ️ Utrzymanie
+         </div>
+         <div class="text-xl font-bold text-cyan-400" id="cal-maintain">
+          0
+         </div>
+         <div class="text-xs text-slate-500">
+          kcal
+         </div>
+        </div>
+        <div class="card-glass rounded-xl p-4 text-center">
+         <div class="text-xs text-slate-400 mb-1">
+          🔺 Masa
+         </div>
+         <div class="text-xl font-bold text-green-400" id="cal-surplus">
+          0
+         </div>
+         <div class="text-xs text-slate-500">
+          kcal
+         </div>
+        </div>
+       </div>
+       <div class="mt-4 card-glass rounded-xl p-4">
+        <div class="text-sm font-medium text-slate-300 mb-3">
+         📊 Podział makroskładników (utrzymanie)
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+         <div>
+          <div class="text-lg font-bold text-amber-400" id="macro-protein">
+           0g
+          </div>
+          <div class="text-xs text-slate-400">
+           Białko
+          </div>
+         </div>
+         <div>
+          <div class="text-lg font-bold text-blue-400" id="macro-carbs">
+           0g
+          </div>
+          <div class="text-xs text-slate-400">
+           Węglowodany
+          </div>
+         </div>
+         <div>
+          <div class="text-lg font-bold text-pink-400" id="macro-fat">
+           0g
+          </div>
+          <div class="text-xs text-slate-400">
+           Tłuszcze
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+     </div><!-- Pyramid Calculator -->
+     <div id="pyramid-section" class="hidden card-glass rounded-2xl p-6 md:p-8 animate-fade">
+      <h2 id="pyramid-section-title" class="text-xl font-semibold mb-6 flex items-center gap-2"><span class="w-2 h-2 bg-green-400 rounded-full"></span> Piramida Żywieniowa USA 2025-2030</h2>
+      <div class="space-y-5">
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="pyr-weight" class="block text-sm font-medium text-slate-300 mb-2">Waga (kg)</label> <input type="number" id="pyr-weight" placeholder="70" min="20" max="300" step="0.1" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+        </div>
+        <div><label for="pyr-height" class="block text-sm font-medium text-slate-300 mb-2">Wzrost (cm)</label> <input type="number" id="pyr-height" placeholder="175" min="100" max="250" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+        </div>
+       </div>
+       <div class="grid grid-cols-2 gap-4">
+        <div><label for="pyr-age" class="block text-sm font-medium text-slate-300 mb-2">Wiek (lata)</label> <input type="number" id="pyr-age" placeholder="30" min="10" max="120" class="w-full input-field rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none">
+        </div>
+        <div><label class="block text-sm font-medium text-slate-300 mb-2">Płeć</label>
+         <div class="flex gap-2"><button type="button" id="pyr-gender-male" onclick="selectPyramidGender('male')" class="flex-1 input-field rounded-xl py-3 text-center transition-all hover:border-cyan-400"> 👨 Mężczyzna </button> <button type="button" id="pyr-gender-female" onclick="selectPyramidGender('female')" class="flex-1 input-field rounded-xl py-3 text-center transition-all hover:border-cyan-400"> 👩 Kobieta </button>
+         </div>
+        </div>
+       </div>
+       <div><label class="block text-sm font-medium text-slate-300 mb-2">Poziom aktywności</label> <select id="pyr-activity" class="w-full input-field rounded-xl px-4 py-3 text-white outline-none cursor-pointer"> <option value="1.2">Siedzący tryb życia (brak ćwiczeń)</option> <option value="1.375">Lekka aktywność (1-3 dni/tydz.)</option> <option value="1.55" selected>Umiarkowana aktywność (3-5 dni/tydz.)</option> <option value="1.725">Wysoka aktywność (6-7 dni/tydz.)</option> <option value="1.9">Bardzo wysoka aktywność (2x dziennie)</option> </select>
+       </div><button onclick="calculatePyramid()" class="w-full btn-primary text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg> Oblicz zalecenia </button>
+      </div>
+      <div id="pyramid-result" class="hidden mt-6 animate-fade"><!-- Macronutrients -->
+       <div class="result-card rounded-xl p-6 mb-6">
+        <div class="text-sm font-medium text-slate-300 mb-4">
+         📊 Rozkład Makroskładników (24h) - Piramida USA 2025-2030
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-4">
+         <div class="text-center">
+          <div class="text-2xl font-bold text-amber-400" id="pyr-protein">
+           0g
+          </div>
+          <div class="text-xs text-slate-400">
+           Białko (24%)
+          </div>
+         </div>
+         <div class="text-center">
+          <div class="text-2xl font-bold text-blue-400" id="pyr-carbs">
+           0g
+          </div>
+          <div class="text-xs text-slate-400">
+           Węglowodany (40%)
+          </div>
+         </div>
+         <div class="text-center">
+          <div class="text-2xl font-bold text-pink-400" id="pyr-fat">
+           0g
+          </div>
+          <div class="text-xs text-slate-400">
+           Tłuszcze (32%)
+          </div>
+         </div>
+        </div>
+        <div class="flex gap-2 text-xs">
+         <div class="flex-1 h-2 rounded-full" style="background: linear-gradient(90deg, #fbbf24 0%, #fbbf24 24%, #60a5fa 24%, #60a5fa 64%, #ec4899 64%, #ec4899 96%)"></div>
+        </div>
+       </div><!-- Food Groups -->
+       <div class="result-card rounded-xl p-6">
+        <div class="text-sm font-medium text-slate-300 mb-4">
+         🍽️ Grupy Żywieniowe (Porcje Dziennie)
+        </div>
+        <div class="space-y-3">
+         <div class="flex items-center justify-between p-3 card-glass rounded-lg">
+          <div>
+           <div class="font-medium text-slate-200">
+            🥬 Warzywa
+           </div>
+           <div class="text-xs text-slate-400">
+            Świeże lub gotowane
+           </div>
+          </div>
+          <div class="text-2xl font-bold text-green-400" id="pyr-vegetables">
+           3
+          </div>
+         </div>
+         <div class="flex items-center justify-between p-3 card-glass rounded-lg">
+          <div>
+           <div class="font-medium text-slate-200">
+            🍎 Owoce
+           </div>
+           <div class="text-xs text-slate-400">
+            Świeże lub suszone
+           </div>
+          </div>
+          <div class="text-2xl font-bold text-red-400" id="pyr-fruits">
+           2
+          </div>
+         </div>
+         <div class="flex items-center justify-between p-3 card-glass rounded-lg">
+          <div>
+           <div class="font-medium text-slate-200">
+            🌾 Ziarna Pełne
+           </div>
+           <div class="text-xs text-slate-400">
+            Chleb, makaron, ryż
+           </div>
+          </div>
+          <div class="text-2xl font-bold text-amber-400" id="pyr-grains">
+           3
+          </div>
+         </div>
+         <div class="flex items-center justify-between p-3 card-glass rounded-lg">
+          <div>
+           <div class="font-medium text-slate-200">
+            🥛 Nabiał
+           </div>
+           <div class="text-xs text-slate-400">
+            Mleko, jogurt, ser
+           </div>
+          </div>
+          <div class="text-2xl font-bold text-cyan-400" id="pyr-dairy">
+           3
+          </div>
+         </div>
+         <div class="flex items-center justify-between p-3 card-glass rounded-lg">
+          <div>
+           <div class="font-medium text-slate-200">
+            🥩 Białko
+           </div>
+           <div class="text-xs text-slate-400">
+            Mięso, ryba, jaja, fasola
+           </div>
+          </div>
+          <div class="text-2xl font-bold text-orange-400" id="pyr-protein-amount">
+           ~140g
+          </div>
+         </div>
+        </div>
+       </div>
+       <div class="mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+        <div class="text-sm text-green-300">
+         ✓ Rekomendacje wg piramidy żywieniowej USA 2025-2030 dla Twoich parametrów
+        </div>
+       </div>
+      </div>
+     </div><!-- Footer -->
+     <div class="text-center mt-6 text-xs text-slate-500">
+      💡 Wyniki mają charakter informacyjny. Skonsultuj się ze specjalistą.
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    let selectedGender = null;
+    let selectedBMIGender = null;
+    let selectedPyramidGender = null;
+    let currentTab = 'bmi';
+
+    const defaultConfig = {
+      main_title: 'Kalkulator Zdrowia',
+      bmi_section_title: 'Kalkulator BMI',
+      calorie_section_title: 'Zapotrzebowanie kaloryczne',
+      pyramid_section_title: 'Piramida Żywieniowa USA 2025-2030',
+      background_color: '#0f172a',
+      surface_color: '#1e293b',
+      text_color: '#e2e8f0',
+      primary_action_color: '#06b6d4',
+      secondary_action_color: '#22d3ee'
+    };
+
+    let config = { ...defaultConfig };
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const bmiSection = document.getElementById('bmi-section');
+      const caloriesSection = document.getElementById('calories-section');
+      const pyramidSection = document.getElementById('pyramid-section');
+      const tabBmi = document.getElementById('tab-bmi');
+      const tabCalories = document.getElementById('tab-calories');
+      const tabPyramid = document.getElementById('tab-pyramid');
+      
+      // Hide all sections
+      bmiSection.classList.add('hidden');
+      caloriesSection.classList.add('hidden');
+      pyramidSection.classList.add('hidden');
+      
+      // Remove tab active state
+      tabBmi.classList.remove('tab-active', 'text-white');
+      tabBmi.classList.add('text-slate-400');
+      tabCalories.classList.remove('tab-active', 'text-white');
+      tabCalories.classList.add('text-slate-400');
+      tabPyramid.classList.remove('tab-active', 'text-white');
+      tabPyramid.classList.add('text-slate-400');
+      
+      // Show selected section and activate tab
+      if (tab === 'bmi') {
+        bmiSection.classList.remove('hidden');
+        tabBmi.classList.add('tab-active', 'text-white');
+        tabBmi.classList.remove('text-slate-400');
+      } else if (tab === 'calories') {
+        caloriesSection.classList.remove('hidden');
+        tabCalories.classList.add('tab-active', 'text-white');
+        tabCalories.classList.remove('text-slate-400');
+      } else if (tab === 'pyramid') {
+        pyramidSection.classList.remove('hidden');
+        tabPyramid.classList.add('tab-active', 'text-white');
+        tabPyramid.classList.remove('text-slate-400');
+      }
+    }
+
+    function selectBMIGender(gender) {
+      selectedBMIGender = gender;
+      const maleBtn = document.getElementById('bmi-gender-male');
+      const femaleBtn = document.getElementById('bmi-gender-female');
+      
+      maleBtn.style.borderColor = gender === 'male' ? '#22d3ee' : 'rgba(255, 255, 255, 0.15)';
+      maleBtn.style.background = gender === 'male' ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+      femaleBtn.style.borderColor = gender === 'female' ? '#22d3ee' : 'rgba(255, 255, 255, 0.15)';
+      femaleBtn.style.background = gender === 'female' ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+    }
+
+    function selectGender(gender) {
+      selectedGender = gender;
+      const maleBtn = document.getElementById('gender-male');
+      const femaleBtn = document.getElementById('gender-female');
+      
+      maleBtn.style.borderColor = gender === 'male' ? '#22d3ee' : 'rgba(255, 255, 255, 0.15)';
+      maleBtn.style.background = gender === 'male' ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+      femaleBtn.style.borderColor = gender === 'female' ? '#22d3ee' : 'rgba(255, 255, 255, 0.15)';
+      femaleBtn.style.background = gender === 'female' ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+    }
+
+    function selectPyramidGender(gender) {
+      selectedPyramidGender = gender;
+      const maleBtn = document.getElementById('pyr-gender-male');
+      const femaleBtn = document.getElementById('pyr-gender-female');
+      
+      maleBtn.style.borderColor = gender === 'male' ? '#22d3ee' : 'rgba(255, 255, 255, 0.15)';
+      maleBtn.style.background = gender === 'male' ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+      femaleBtn.style.borderColor = gender === 'female' ? '#22d3ee' : 'rgba(255, 255, 255, 0.15)';
+      femaleBtn.style.background = gender === 'female' ? 'rgba(34, 211, 238, 0.2)' : 'rgba(255, 255, 255, 0.08)';
+    }
+
+    function calculateBMI() {
+      const weight = parseFloat(document.getElementById('bmi-weight').value);
+      const height = parseFloat(document.getElementById('bmi-height').value);
+      
+      if (!weight || !height || !selectedBMIGender || weight <= 0 || height <= 0) {
+        showInlineMessage('bmi-section', 'Wprowadź poprawne dane i wybierz płeć');
+        return;
+      }
+      
+      const heightM = height / 100;
+      const bmi = weight / (heightM * heightM);
+      const bmiRounded = Math.round(bmi * 10) / 10;
+      
+      let category, description, color;
+      
+      // Normy BMI mogą się nieznacznie różnić między płciami, ale standardowo używamy tych samych
+      if (bmi < 16) {
+        category = 'Wygłodzenie';
+        description = selectedBMIGender === 'male' 
+          ? 'Twoja waga jest znacznie poniżej normy. Zalecana konsultacja z lekarzem.' 
+          : 'Twoja waga jest znacznie poniżej normy. Konsultacja z lekarzem jest bardzo ważna.';
+        color = '#22d3ee';
+      } else if (bmi < 18.5) {
+        category = 'Niedowaga';
+        description = selectedBMIGender === 'male' 
+          ? 'Twoja waga jest poniżej normy. Zwiększ kaloryczność diety.' 
+          : 'Twoja waga jest poniżej normy. Zwróć uwagę na zdrową dietę.';
+        color = '#22d3ee';
+      } else if (bmi < 25) {
+        category = 'Waga prawidłowa ✓';
+        description = 'Gratulacje! Twoja waga mieści się w normie. Utrzymuj zdrowy styl życia.';
+        color = '#10b981';
+      } else if (bmi < 30) {
+        category = 'Nadwaga';
+        description = selectedBMIGender === 'male' 
+          ? 'Zalecamy zwiększenie aktywności fizycznej i zbilansowaną dietę.' 
+          : 'Zbilansowana dieta i regularna aktywność pomogą osiągnąć idealna wagę.';
+        color = '#f59e0b';
+      } else if (bmi < 35) {
+        category = 'Otyłość I stopnia';
+        description = selectedBMIGender === 'male' 
+          ? 'Konsultacja z dietetykiem i zwiększenie aktywności są zalecane.' 
+          : 'Profesjonalna konsultacja dietetyczna będzie bardzo pomocna.';
+        color = '#ef4444';
+      } else if (bmi < 40) {
+        category = 'Otyłość II stopnia';
+        description = 'Zalecana pilna konsultacja z lekarzem i specjalistą ds. żywienia.';
+        color = '#dc2626';
+      } else {
+        category = 'Otyłość III stopnia';
+        description = 'Wymagana natychmiastowa konsultacja medyczna.';
+        color = '#dc2626';
+      }
+      
+      document.getElementById('bmi-value').textContent = bmiRounded;
+      document.getElementById('bmi-category').textContent = category;
+      document.getElementById('bmi-category').style.color = color;
+      document.getElementById('bmi-description').textContent = description;
+      
+      // Position indicator (16-40 range mapped to 0-100%)
+      const indicatorPos = Math.min(Math.max((bmi - 16) / (40 - 16) * 100, 0), 100);
+      document.getElementById('bmi-indicator').style.left = indicatorPos + '%';
+      
+      document.getElementById('bmi-result').classList.remove('hidden');
+    }
+
+    function calculateCalories() {
+      const weight = parseFloat(document.getElementById('cal-weight').value);
+      const height = parseFloat(document.getElementById('cal-height').value);
+      const age = parseFloat(document.getElementById('cal-age').value);
+      const activity = parseFloat(document.getElementById('cal-activity').value);
+      
+      if (!weight || !height || !age || !selectedGender) {
+        showInlineMessage('calories-section', 'Wypełnij wszystkie pola i wybierz płeć');
+        return;
+      }
+      
+      // Mifflin-St Jeor Equation
+      let bmr;
+      if (selectedGender === 'male') {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+      } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+      }
+      
+      const tdee = Math.round(bmr * activity);
+      const deficit = Math.round(tdee - 500);
+      const surplus = Math.round(tdee + 300);
+      
+      // Macros (30% protein, 40% carbs, 30% fat)
+      const proteinCal = tdee * 0.30;
+      const carbsCal = tdee * 0.40;
+      const fatCal = tdee * 0.30;
+      
+      const proteinG = Math.round(proteinCal / 4);
+      const carbsG = Math.round(carbsCal / 4);
+      const fatG = Math.round(fatCal / 9);
+      
+      document.getElementById('tdee-value').textContent = tdee;
+      document.getElementById('cal-deficit').textContent = deficit;
+      document.getElementById('cal-maintain').textContent = tdee;
+      document.getElementById('cal-surplus').textContent = surplus;
+      document.getElementById('macro-protein').textContent = proteinG + 'g';
+      document.getElementById('macro-carbs').textContent = carbsG + 'g';
+      document.getElementById('macro-fat').textContent = fatG + 'g';
+      
+      document.getElementById('calories-result').classList.remove('hidden');
+    }
+
+    function calculatePyramid() {
+      const weight = parseFloat(document.getElementById('pyr-weight').value);
+      const height = parseFloat(document.getElementById('pyr-height').value);
+      const age = parseFloat(document.getElementById('pyr-age').value);
+      const activity = parseFloat(document.getElementById('pyr-activity').value);
+      
+      if (!weight || !height || !age || !selectedPyramidGender) {
+        showInlineMessage('pyramid-section', 'Wypełnij wszystkie pola i wybierz płeć');
+        return;
+      }
+      
+      // Calculate TDEE
+      let bmr;
+      if (selectedPyramidGender === 'male') {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5;
+      } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161;
+      }
+      
+      const tdee = Math.round(bmr * activity);
+      
+      // USA Pyramid 2025-2030: 24% protein, 40% carbs, 32% fat
+      const proteinCal = tdee * 0.24;
+      const carbsCal = tdee * 0.40;
+      const fatCal = tdee * 0.32;
+      
+      const proteinG = Math.round(proteinCal / 4);
+      const carbsG = Math.round(carbsCal / 4);
+      const fatG = Math.round(fatCal / 9);
+      
+      // Food groups stay constant for USA pyramid recommendations
+      document.getElementById('pyr-protein').textContent = proteinG + 'g';
+      document.getElementById('pyr-carbs').textContent = carbsG + 'g';
+      document.getElementById('pyr-fat').textContent = fatG + 'g';
+      document.getElementById('pyr-vegetables').textContent = '3';
+      document.getElementById('pyr-fruits').textContent = '2';
+      document.getElementById('pyr-grains').textContent = '3';
+      document.getElementById('pyr-dairy').textContent = '3';
+      document.getElementById('pyr-protein-amount').textContent = '~140g';
+      
+      document.getElementById('pyramid-result').classList.remove('hidden');
+    }
+
+    function showInlineMessage(sectionId, message) {
+      const section = document.getElementById(sectionId);
+      let messageEl = section.querySelector('.inline-message');
+      
+      if (!messageEl) {
+        messageEl = document.createElement('div');
+        messageEl.className = 'inline-message mt-4 p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-300 text-sm text-center animate-fade';
+        section.appendChild(messageEl);
+      }
+      
+      messageEl.textContent = '⚠️ ' + message;
+      
+      setTimeout(() => {
+        if (messageEl) messageEl.remove();
+      }, 3000);
+    }
+
+    async function onConfigChange(cfg) {
+      document.getElementById('main-title').textContent = cfg.main_title || defaultConfig.main_title;
+      document.getElementById('bmi-section-title').textContent = cfg.bmi_section_title || defaultConfig.bmi_section_title;
+      document.getElementById('calorie-section-title').textContent = cfg.calorie_section_title || defaultConfig.calorie_section_title;
+      document.getElementById('pyramid-section-title').textContent = cfg.pyramid_section_title || defaultConfig.pyramid_section_title;
+    }
+
+    function mapToCapabilities(cfg) {
+      return {
+        recolorables: [
+          {
+            get: () => cfg.background_color || defaultConfig.background_color,
+            set: (value) => { cfg.background_color = value; window.elementSdk.setConfig({ background_color: value }); }
+          },
+          {
+            get: () => cfg.surface_color || defaultConfig.surface_color,
+            set: (value) => { cfg.surface_color = value; window.elementSdk.setConfig({ surface_color: value }); }
+          },
+          {
+            get: () => cfg.text_color || defaultConfig.text_color,
+            set: (value) => { cfg.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+          },
+          {
+            get: () => cfg.primary_action_color || defaultConfig.primary_action_color,
+            set: (value) => { cfg.primary_action_color = value; window.elementSdk.setConfig({ primary_action_color: value }); }
+          },
+          {
+            get: () => cfg.secondary_action_color || defaultConfig.secondary_action_color,
+            set: (value) => { cfg.secondary_action_color = value; window.elementSdk.setConfig({ secondary_action_color: value }); }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(cfg) {
+      return new Map([
+        ['main_title', cfg.main_title || defaultConfig.main_title],
+        ['bmi_section_title', cfg.bmi_section_title || defaultConfig.bmi_section_title],
+        ['calorie_section_title', cfg.calorie_section_title || defaultConfig.calorie_section_title],
+        ['pyramid_section_title', cfg.pyramid_section_title || defaultConfig.pyramid_section_title]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c72bcf115b2782e',t:'MTc2OTk2MjQyNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
